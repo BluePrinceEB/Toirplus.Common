@@ -1,7 +1,8 @@
 --[[
 	Vector: Class {
 		
-		Vector(...) - initial call
+		Vector(...) - initial call:
+                        local myVec = Vector(<table> or <number>, <number>, <number>)
 
 		properties:
 			.x  ->  the x value
@@ -36,6 +37,8 @@
 			:AngleBetween(Vector, Vector) -> returns the angle formed from a vector to both input vectors
 			:Perpendicular() -> creates a new vector that is rotated 90° right
 			:Perpendicular2() -> creates a new vector that is rotated 90° left
+                        :Extend(Vector, Distance) -> extends a vector towards a vector and returns it
+                        :RotateAroundPoint(Vector, Angle) -> creates a new vector that is rotated around point
 
 		Examples:
 			local Player = function() return GetMyChamp() end
@@ -133,6 +136,8 @@ function Vector.New(x, y, z)
   	this.AngleBetween 	= Vector.AngleBetween
   	this.Perpendicular  	= Vector.Perpendicular
   	this.Perpendicular2 	= Vector.Perpendicular2
+        this.Extend             = Vector.Extend
+        this.RotateAroundPoint  = Vector.RotateAroundPoint
 
   	setmetatable(this, Vector.meta1)
 
@@ -321,7 +326,7 @@ function Vector:DotProduct(v)
 end
 
 function Vector:ProjectOn(v)
-	local l = Vector.Len2(v) / Vector.Len2(self)
+	local l = Vector.Len2(self, v) / Vector.Len2(v)
 	return Vector.New(v * l)
 end
 
@@ -378,12 +383,50 @@ function Vector:Rotated(phiX, phiY, phiZ)
 	return v
 end
 
+local epsilon = 1e-9
+local function Close(a, b, eps)
+        if math.abs(eps) < epsilon then
+                eps = 1e-9
+        end
+
+        return math.abs(a - b) <= eps
+end
+
 function Vector:Polar()
-	--
+	if Close(self.x, 0, 0) then
+                if self.z or self.y > 0 then 
+                        return 90
+                end
+
+                return (self.z or self.y) < 0 and 270 or 0
+        end
+
+        local theta = math.deg(math.atan((self.z or self.y) / self.x))
+
+        if self.x < 0 then
+                theta = theta + 180
+        end
+
+        if theta < 0 then
+                theta = theta + 360
+        end
+
+        return theta
 end
 
 function Vector:AngleBetween(v1, v2)
-	--
+        local p1, p2 = (-self + v1), (-self + v2)
+	local theta = Vector.Polar(p1) - Vector.Polar(p2)
+
+        if theta < 0 then
+                theta = theta + 360
+        end
+
+        if theta > 180 then
+                theta = 360 - theta
+        end
+
+        return theta
 end
 
 function Vector:Perpendicular()
@@ -392,6 +435,17 @@ end
 
 function Vector:Perpendicular2()
 	return Vector.New(self.z, self.y, -self.x)
+end
+
+function Vector:Extend(to, distance)
+        return self + Vector.Normalized(to - self) * distance
+end
+
+function Vector:RotateAroundPoint(v, angle)
+        local cos, sin = mathcos(angle), mathsin(angle)
+        local x = ((self.x - v.x) * cos) - ((v.y - self.y) * sin) + v.x
+        local y = ((v.y - self.y) * cos) + ((self.x - v.x) * sin) + v.y
+        return Vector.New(x, y, self.z or 0)
 end
 
 -------------------------------------------------------------
