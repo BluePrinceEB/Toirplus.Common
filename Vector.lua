@@ -72,6 +72,9 @@ local assert            = assert
 local type 		= assert( type )   
 local setmetatable 	= assert( setmetatable )
 local getmetatable 	= assert( getmetatable )
+local mathabs           = assert( math.abs )
+local mathdeg           = assert( math.deg )
+local mathatan          = assert( math.atan )
 local mathsqrt 		= assert( math.sqrt ) 
 local mathsin 		= assert( math.sin ) 
 local mathcos 		= assert( math.cos ) 
@@ -385,11 +388,11 @@ end
 
 local epsilon = 1e-9
 local function Close(a, b, eps)
-        if math.abs(eps) < epsilon then
+        if mathabs(eps) < epsilon then
                 eps = 1e-9
         end
 
-        return math.abs(a - b) <= eps
+        return mathabs(a - b) <= eps
 end
 
 function Vector:Polar()
@@ -401,7 +404,7 @@ function Vector:Polar()
                 return (self.z or self.y) < 0 and 270 or 0
         end
 
-        local theta = math.deg(math.atan((self.z or self.y) / self.x))
+        local theta = mathdeg(mathatan((self.z or self.y) / self.x))
 
         if self.x < 0 then
                 theta = theta + 180
@@ -526,4 +529,4 @@ end
 
 setmetatable(Vector, Vector.meta2)
 
--------------------------------------------------------------
+------------------------------------------------------------
